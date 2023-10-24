@@ -4,10 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRAWLY</title>
+    <title>YBBY</title>
     <style>
+        body {
+            background-color: black;
+            color: white; /* To make text visible on a black background */
+        }
+
         canvas {
-            border: 1px solid black;
+            border: 1px solid white; /* Changed border to white for visibility */
             cursor: crosshair;
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
@@ -16,30 +21,41 @@
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
+            display: block;
+            margin: 20px auto;
         }
 
         #controls {
             display: flex;
             justify-content: space-between;
             width: 400px;
-            margin-bottom: 10px;
+            margin: 10px auto;
+        }
+
+        #useCustomImage {
+            background: url('button.jpg') no-repeat center;
+            border: none;
+            cursor: pointer;
+            width: 150px;  /* You can adjust as per the button image dimensions */
+            height: 50px;  /* You can adjust as per the button image dimensions */
         }
     </style>
 </head>
 
 <body>
 
+<canvas id="canvas" width="800" height="500"></canvas>
+
 <div id="controls">
     <div>
         <input type="file" id="customImage" style="display:none">
-        <button id="useCustomImage">Upload Image</button>
+        <button id="useCustomImage"></button>
     </div>
     <div>
         <label for="brushSize">Brush Size:</label>
-        <input type="range" id="brushSize" min="1" max="50" value="25">
+        <input type="range" id="brushSize" min="1" max="50" value="10">
     </div>
 </div>
-<canvas id="canvas" width="800" height="800"></canvas>
 
 <script>
     const canvas = document.getElementById('canvas');
@@ -86,10 +102,10 @@
                 const img = new Image();
                 img.onload = function() {
                     const maxDimension = 800;
-                    
+
                     // Calculate the scaling factor to maintain aspect ratio
                     let scaleFactor = maxDimension / Math.max(img.width, img.height);
-                    
+
                     const resizedWidth = img.width * scaleFactor;
                     const resizedHeight = img.height * scaleFactor;
 
