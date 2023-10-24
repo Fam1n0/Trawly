@@ -68,7 +68,6 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
-    let customPattern;
     let canvasStates = [];
     let currentStateIndex = -1;
 
@@ -117,11 +116,18 @@
         link.click();
     }
 
-    canvas.addEventListener('mousedown', () => { isDrawing = true; });
+    // Save the initial state of the canvas
+    window.onload = function() {
+        saveCanvasState();
+    }
+
+    canvas.addEventListener('mousedown', () => {
+        isDrawing = true;
+        saveCanvasState();  // Save the current state before drawing begins
+    });
     canvas.addEventListener('mouseup', () => {
         isDrawing = false;
         ctx.beginPath();
-        saveCanvasState();
     });
     canvas.addEventListener('mousemove', draw);
 
@@ -153,17 +159,13 @@
             reader.onload = function(event) {
                 const img = new Image();
                 img.onload = function() {
-                    const maxDimension = 800;
-                    let scaleFactor = maxDimension / Math.max(img.width, img.height);
-                    const resizedWidth = img.width * scaleFactor;
-                    const resizedHeight = img.height * scaleFactor;
-                    const offscreenCanvas = document.createElement('canvas');
-                    offscreenCanvas.width = resizedWidth;
-                    offscreenCanvas.height = resizedHeight;
-                    const offscreenCtx = offscreenCanvas.getContext('2d');
-                    offscreenCtx.drawImage(img, 0, 0, resizedWidth, resizedHeight);
-                    customPattern = ctx.createPattern(offscreenCanvas, 'repeat');
-                    ctx.strokeStyle = customPattern;
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    const scaleFactor = Math.min(canvas.width / img.width, canvas.height / img.height);
+                    const imgWidth = img.width * scaleFactor;
+                    const imgHeight = img.height * scaleFactor;
+                    const x = (canvas.width - imgWidth) / 2;
+                    const y = (canvas.height - imgHeight) / 2;
+                    ctx.drawImage(img, x, y, imgWidth, imgHeight);
                 }
                 img.src = event.target.result;
             }
