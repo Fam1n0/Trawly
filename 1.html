@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,11 +10,11 @@
     <style>
         body {
             background-color: black;
-            color: white;
+            color: white; /* To make text visible on a black background */
         }
 
         canvas {
-            border: 1px solid white;
+            border: 1px solid white; /* Changed border to white for visibility */
             cursor: crosshair;
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
@@ -33,9 +35,9 @@
         }
 
         #useCustomImage {
-            background: url('button.jpg') no-repeat center;
-            background-size: cover;
-            background-position: center;
+            background: url('button.jpg') no-repeat center; /* using the purple button */
+            background-size: cover; /* ensures the image covers the entire button */
+            background-position: center; /* centers the image within the button */
             border: none;
             cursor: pointer;
             width: 150px;
@@ -53,14 +55,9 @@
         <input type="file" id="customImage" style="display:none">
         <button id="useCustomImage"></button>
     </div>
-    <div>
-        <label for="brushSize">Brush Size:</label>
-        <input type="range" id="brushSize" min="1" max="50" value="10">
-    </div>
-    <div>
-        <button id="undo">Undo</button>
-        <button id="redo">Redo</button>
-        <button id="save">Save</button>
+    <div align='center'>
+        <label for="brushSize"><font size='15' color='Teal'>Brush Size</font></label>
+        <input type="range" id="brushSize" min="1" max="100" value="20">
     </div>
 </div>
 
@@ -68,69 +65,17 @@
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
-    let canvasStates = [];
-    let currentStateIndex = -1;
+    let customPattern;
 
-    function saveCanvasState() {
-        while (canvasStates.length > currentStateIndex + 1) {
-            canvasStates.pop();
-        }
-        canvasStates.push(canvas.toDataURL());
-        currentStateIndex++;
-    }
-
-    function undo() {
-        if (currentStateIndex <= 0) return;
-        currentStateIndex--;
-        let prevState = new Image();
-        prevState.src = canvasStates[currentStateIndex];
-        prevState.onload = function() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(prevState, 0, 0);
-        };
-    }
-
-    function redo() {
-        if (currentStateIndex >= canvasStates.length - 1) return;
-        currentStateIndex++;
-        let nextState = new Image();
-        nextState.src = canvasStates[currentStateIndex];
-        nextState.onload = function() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(nextState, 0, 0);
-        };
-    }
-
-    function save() {
-        let now = new Date();
-        let month = String(now.getMonth() + 1).padStart(2, '0');
-        let day = String(now.getDate()).padStart(2, '0');
-        let year = String(now.getFullYear()).slice(-2);
-        let hours = String(now.getHours()).padStart(2, '0');
-        let minutes = String(now.getMinutes()).padStart(2, '0');
-        let seconds = String(now.getSeconds()).padStart(2, '0');
-        let filename = `save${month}${day}${year}_${hours}${minutes}${seconds}.png`;
-        let link = document.createElement('a');
-        link.download = filename;
-        link.href = canvas.toDataURL();
-        link.click();
-    }
-
-    // Save the initial state of the canvas
-    window.onload = function() {
-        saveCanvasState();
-    }
-
-    canvas.addEventListener('mousedown', () => {
-        isDrawing = true;
-        saveCanvasState();  // Save the current state before drawing begins
-    });
+    // Mouse Events
+    canvas.addEventListener('mousedown', () => { isDrawing = true; });
     canvas.addEventListener('mouseup', () => {
         isDrawing = false;
         ctx.beginPath();
     });
     canvas.addEventListener('mousemove', draw);
 
+    // Touch Events
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         isDrawing = true;
@@ -154,18 +99,30 @@
 
     document.getElementById('customImage').addEventListener('change', function() {
         const file = this.files[0];
+
         if (file) {
             const reader = new FileReader();
             reader.onload = function(event) {
                 const img = new Image();
                 img.onload = function() {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    const scaleFactor = Math.min(canvas.width / img.width, canvas.height / img.height);
-                    const imgWidth = img.width * scaleFactor;
-                    const imgHeight = img.height * scaleFactor;
-                    const x = (canvas.width - imgWidth) / 2;
-                    const y = (canvas.height - imgHeight) / 2;
-                    ctx.drawImage(img, x, y, imgWidth, imgHeight);
+                    const maxDimension = 800;
+
+                    // Calculate the scaling factor to maintain aspect ratio
+                    let scaleFactor = maxDimension / Math.max(img.width, img.height);
+
+                    const resizedWidth = img.width * scaleFactor;
+                    const resizedHeight = img.height * scaleFactor;
+
+                    // Resize the image to the calculated dimensions
+                    const offscreenCanvas = document.createElement('canvas');
+                    offscreenCanvas.width = resizedWidth;
+                    offscreenCanvas.height = resizedHeight;
+                    const offscreenCtx = offscreenCanvas.getContext('2d');
+                    offscreenCtx.drawImage(img, 0, 0, resizedWidth, resizedHeight);
+
+                    // Create pattern with resized image
+                    customPattern = ctx.createPattern(offscreenCanvas, 'repeat');
+                    ctx.strokeStyle = customPattern;
                 }
                 img.src = event.target.result;
             }
@@ -177,17 +134,13 @@
         if (!isDrawing) return;
         let x = event.clientX ? event.clientX - canvas.offsetLeft : event.pageX - canvas.offsetLeft;
         let y = event.clientY ? event.clientY - canvas.offsetTop : event.pageY - canvas.offsetTop;
+
         ctx.lineCap = 'round';
         ctx.lineTo(x, y);
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(x, y);
     }
-
-    document.getElementById('undo').addEventListener('click', undo);
-    document.getElementById('redo').addEventListener('click', redo);
-    document.getElementById('save').addEventListener('click', save);
-
 </script>
 
 </body>
